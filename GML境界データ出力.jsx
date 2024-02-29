@@ -1,10 +1,13 @@
 ﻿/**
  * GML境界データ出力
  * 
- * Copyright (c) 2021 Tetsuo Horiuchi
+ * Copyright (c) 2024 Tetsuo Horiuchi
  * Released under the MIT license
  * https://opensource.org/license/mit
- * ver. 3.1
+ * ver. 3.2.0
+ * GMLデータ取得先　https://www.e-stat.go.jp/gis/statmap-search?page=1&type=2&aggregateUnitForBoundary=A
+ * 
+ * 2020年度国勢調査データと以前のデータで座標が変わったようです。
  */
 
 /**
@@ -372,7 +375,15 @@ function setRegionTag(areaObj, layerName, originPosition) {
     }
     var textGroupObj = targetLayer.groupItems.add();
     var shapePosition = getRegionTagPosition(areaObj, originPosition);
-    var areaName = getRegionParameter(/<fme:MOJI>([^<]*)</,areaObj );
+
+    /**
+     * 2020年度国勢調査データのGMLの項目に変更があったため新旧対応できるように
+     * 参考
+     * https://www.e-stat.go.jp/help/data-definition-information/downloaddata/A002005212015.pdf
+     */
+    var areaName = getRegionParameter(/<fme:MOJI>([^<]*)</, areaObj);
+    areaName = areaName ? areaName : getRegionParameter(/<fme:S_NAME>([^<]*)</, areaObj);
+
     textGroupObj.name = areaName;
     
     if (areaName !== " ") {
@@ -449,8 +460,18 @@ function getAreaPath(areaObj) {
  */
 function getLayerName(areaObj) {
     var layerName = "【";
-    layerName += getRegionParameter(/<fme:KEN_NAME>([^<]*)</,areaObj );
-    layerName += getRegionParameter(/<fme:GST_NAME>([^<]*)</,areaObj );
+
+    /**
+     * 2020年度国勢調査データのGMLの項目に変更があったため新旧対応できるように
+     * 参考
+     * https://www.e-stat.go.jp/help/data-definition-information/downloaddata/A002005212015.pdf
+     */
+    var regionName = getRegionParameter(/<fme:KEN_NAME>([^<]*)</, areaObj);
+    layerName += regionName ? regionName : getRegionParameter(/<fme:PREF_NAME>([^<]*)</, areaObj);
+
+    var cityName = getRegionParameter(/<fme:GST_NAME>([^<]*)</, areaObj);
+    layerName += cityName ? cityName : getRegionParameter(/<fme:CITY_NAME>([^<]*)</, areaObj);
+
     layerName += getRegionParameter(/<fme:CSS_NAME>([^<]*)</,areaObj );
     layerName += "】";
     return layerName;
